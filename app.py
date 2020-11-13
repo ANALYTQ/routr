@@ -18,22 +18,18 @@ import subprocess
 import requests
 import json
 
+import osmnx as ox
+import networkx as nx
 import streamlit as st
 import pydeck as pdk
 
 
 # CREATE FUNCTION FOR MAPS
-def create_map(lat, lon, zoom):
+def create_map(computed_view, layers=[]):
     st.write(pdk.Deck(
         map_style="mapbox://styles/mapbox/streets-v8",
-        initial_view_state={
-            "latitude": lat,
-            "longitude": lon,
-            "zoom": zoom,
-            "height": 720,
-            # "pitch": 50,
-        },
-        layers=[],
+        initial_view_state=computed_view,
+        layers=layers,
     ))
 
 
@@ -57,6 +53,7 @@ def get_current_location():
         "wifiAccessPoints": []
     }
 
+    # Specific to MacOS
     if "macOS" in platform.platform():
         aps = get_mac_aps()
         for ap in aps:
@@ -69,7 +66,16 @@ def get_current_location():
     post_url = 'https://www.googleapis.com/geolocation/v1/geolocate?key=' + api_key
     r = requests.post(post_url, data=json.dumps(data_dict))
     j = json.loads(r.text)
-    return [j['location']['lat'], j['location']['lng']]
+    return tuple([j['location']['lat'], j['location']['lng']])
+
+
+def get_location_coordinates(address):
+    api_key = os.environ["LOCATION_KEY"]
+    get_url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + address.replace(" ",
+                                                                                             "+") + '&key=' + api_key
+    r = requests.get(get_url)
+    j = json.loads(r.text)
+    return tuple([j['results'][0]['geometry']['location']['lat'], j['results'][0]['geometry']['location']['lng']])
 
 
 # Main Routine
@@ -84,5 +90,42 @@ with row1_1:
     dest = st.text_input("Destination:", "")
 
 with row1_3:
-    midpoint = get_current_location()
-    create_map(midpoint[0], midpoint[1], 16)
+    if orig == "{Current Location}":
+        midpoint = get_current_location()
+        computed = {
+            "latitude": midpoint[0],
+            "longitude": midpoint[1],
+            "zoom": 17,
+            "height": 720,
+        }
+        create_map(computed)
+
+    elif orig is not None and orig != "":
+        if dest is None or dest == "":
+            midpoint = get_location_coordinates(orig)
+            computed = {
+                "latitude": midpoint[0],
+                "longitude": midpoint[1],
+                "zoom": 17,
+                "height": 720,
+            }
+            create_map(computed)
+
+        else:
+            places = [orig] + [dest]
+
+            graph = ox.graph_from_address(places, network_type='drive_service')
+            nodes, edges = ox.graph_to_gdfs(graph)
+
+            orig_xy = get_location_coordinates(orig)
+            dest_xy = get_location_coordinates(dest)
+
+            orig_node = ox.get_nearest_node(graph, orig_xy, method='euclidean')
+            target_node = ox.get_nearest_node(graph, dest_xy, method='euclidean')
+
+            route = nx.shortest_path(G=graph, source=orig_node, target=target_node, weight="length")
+
+            computed = json.loads(pdk.data_utils.compute_view(nodes[['x', 'y']].loc[route]).to_json())
+            computed["height"] = 720
+
+            create_map(computed)
