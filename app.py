@@ -20,6 +20,7 @@ import json
 
 import osmnx as ox
 import networkx as nx
+import pandas as pd
 import streamlit as st
 import pydeck as pdk
 
@@ -98,7 +99,28 @@ with row1_3:
             "zoom": 17,
             "height": 720,
         }
-        create_map(computed)
+
+        icon_data = {
+            "url": "https://img.icons8.com/plasticine/100/000000/marker.png",
+            "width": 242,
+            "height": 242,
+            "anchorY": 242
+        }
+
+        data = pd.DataFrame({"lat": [midpoint[0]],
+                             "lng": [midpoint[1]],
+                             "icon_data": [icon_data]})
+
+        icon_layer = pdk.Layer(
+            type='IconLayer',
+            data=data,
+            get_icon='icon_data',
+            get_size=4,
+            size_scale=15,
+            get_position=["lng", "lat"]
+        )
+
+        create_map(computed, layers=[icon_layer])
 
     elif orig is not None and orig != "":
         if dest is None or dest == "":
@@ -109,7 +131,28 @@ with row1_3:
                 "zoom": 17,
                 "height": 720,
             }
-            create_map(computed)
+
+            icon_data = {
+                "url": "https://img.icons8.com/plasticine/100/000000/marker.png",
+                "width": 242,
+                "height": 242,
+                "anchorY": 242
+            }
+
+            data = pd.DataFrame({"lat": [midpoint[0]],
+                                 "lng": [midpoint[1]],
+                                 "icon_data": [icon_data]})
+
+            icon_layer = pdk.Layer(
+                type='IconLayer',
+                data=data,
+                get_icon='icon_data',
+                get_size=4,
+                size_scale=15,
+                get_position=["lng", "lat"]
+            )
+
+            create_map(computed, layers=[icon_layer])
 
         else:
             places = [orig] + [dest]
@@ -128,4 +171,24 @@ with row1_3:
             computed = json.loads(pdk.data_utils.compute_view(nodes[['x', 'y']].loc[route]).to_json())
             computed["height"] = 720
 
-            create_map(computed)
+            icon_data = {
+                "url": "https://img.icons8.com/plasticine/100/000000/marker.png",
+                "width": 242,
+                "height": 242,
+                "anchorY": 242
+            }
+
+            data = pd.DataFrame({"lat": [orig_xy[0], dest_xy[0]],
+                                 "lng": [orig_xy[1], dest_xy[1]],
+                                 "icon_data": [icon_data, icon_data]})
+
+            icon_layer = pdk.Layer(
+                type='IconLayer',
+                data=data,
+                get_icon='icon_data',
+                get_size=4,
+                size_scale=15,
+                get_position=["lng", "lat"]
+            )
+
+            create_map(computed, layers=[icon_layer])
