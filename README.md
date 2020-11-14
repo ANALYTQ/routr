@@ -1,5 +1,6 @@
 # routr
-Proof-of-Concept for Route Risk Profiling
+Proof-of-Concept for Route Risk Profiling on US Roads
+<img src="assets/routr-demo.jpg" height="480px" />
 
 ## Quick Setup
 1. Clone the repository to a local folder <br/>
