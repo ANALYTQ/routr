@@ -12,5 +12,6 @@ a. On Linux or Mac<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;```export LOCATION_KEY={Google Maps API Key}```<br/>
 b. On Windows -- on Command Prompt or PowerShell<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;```setx LOCATION_KEY "{Google Maps API Key}"```<br/><br/>
-4. Run the app<br/>
+4. Grab a copy of US Accidents dataset csv file by following the instructions <a href="https://smoosavi.org/datasets/us_accidents">here</a>. By default, the file will be enclosed in a tar.gz archive, which you can open using your Finder/Windows Explorer or zipping utility.<br/><br/>
+5. Run the app<br/>
 ```streamlit run app.py```
